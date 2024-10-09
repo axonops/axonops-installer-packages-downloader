@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os
-import requests
+import urllib.request
 
 # Set variables
 APT_REPO_URL = "https://packages.axonops.com/apt"
@@ -24,16 +24,19 @@ CASSANDRA_DSE6_ARCH = ["all"]
 # Separate architectures for other packages (amd64 and arm64)
 OTHER_ARCHS = ["amd64", "arm64"]
 
-# Helper function to download files
+# Helper function to download files using urllib
 def download_file(url, dest):
-    response = requests.get(url, stream=True)
-    if response.status_code == 200:
-        with open(dest, 'wb') as f:
-            f.write(response.content)
-    else:
-        print(f"Failed to download {url}. Status code: {response.status_code}")
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+        request = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(request) as response:
+            with open(dest, 'wb') as out_file:
+                out_file.write(response.read())
+        print(f"Downloaded {url} to {dest}")
+        return True
+    except urllib.error.URLError as e:
+        print(f"Failed to download {url}: {e.reason}")
         return False
-    return True
 
 # Version comparison by splitting and comparing each part as an integer
 def compare_versions(version1, version2):
@@ -53,10 +56,7 @@ def get_architectures_for_package(package_name):
 def download_packages_for_arch(arch):
     packages_url = f"{APT_REPO_URL}/dists/{DIST}/{COMPONENT}/binary-{arch}/Packages"
     print(f"Downloading {packages_url} for architecture {arch}...")
-    if not download_file(packages_url, f"Packages_{arch}"):
-        print(f"Error: Unable to download {packages_url}.")
-        return False
-    return True
+    return download_file(packages_url, f"Packages_{arch}")
 
 # Step 2: Parse the Packages file to find the latest version of each package
 def get_latest_package_version(package_name, arch):
