@@ -3,7 +3,6 @@ import os
 import urllib.request
 import gzip
 import xml.etree.ElementTree as ET
-from packaging import version
 
 # Set variables
 REPO_URL = "https://packages.axonops.com/yum/"
@@ -11,7 +10,7 @@ PACKAGES = [
     "axon-server",
     "axon-agent",
     "axon-dash",
-    "axon-dse5.1-agent",
+    "axon-dse5.1-agent",  # Ensure this is checked under amd64/arm64
     "axon-cassandra3.11-agent",
     "axon-cassandra4.0-agent",
     "axon-cassandra4.0-agent-jdk8",
@@ -32,6 +31,13 @@ def download_file(url, dest):
         print(f"Downloaded {url} to {dest}")
     except urllib.error.URLError as e:
         print(f"Failed to download {url}: {e.reason}")
+
+# Version comparison function
+def compare_versions(version1, version2):
+    # Split the version strings and compare as integers
+    v1_parts = list(map(int, version1.split('.')))
+    v2_parts = list(map(int, version2.split('.')))
+    return v1_parts > v2_parts
 
 # Step 1: Download the repomd.xml
 print("Downloading repomd.xml...")
@@ -71,8 +77,8 @@ def get_latest_package_version(package_name):
         packages = root.findall(f".//common:package[common:name='{package_name}'][common:arch='{arch}']", namespace)
         for package in packages:
             version_element = package.find("common:version", namespace)
-            ver = version.parse(version_element.attrib['ver'])  # Use version comparison
-            if latest_version is None or ver > latest_version:
+            ver = version_element.attrib['ver']  # Use version string
+            if latest_version is None or compare_versions(ver, latest_version):
                 latest_version = ver
                 latest_package = package
 
