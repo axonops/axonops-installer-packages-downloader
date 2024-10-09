@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 import os
 import requests
-import re
-from packaging import version
-import difflib
 
 # Set variables
 APT_REPO_URL = "https://packages.axonops.com/apt"
@@ -13,7 +10,7 @@ PACKAGES = [
     "axon-server",
     "axon-agent",
     "axon-dash",
-    "axon-dse5.1-agent",
+    "axon-dse5.1-agent",  # Ensure this is checked under amd64/arm64
     "axon-cassandra3.11-agent",
     "axon-cassandra4.0-agent",
     "axon-cassandra4.0-agent-jdk8",
@@ -22,8 +19,9 @@ PACKAGES = [
     "axon-cassandra5.0-agent"
 ]
 
-# Separate architectures for packages
-CASSANDRA_DSE_ARCH = ["all"]
+# Separate architectures for cassandra and dse6.x packages (all architecture)
+CASSANDRA_DSE6_ARCH = ["all"]
+# Separate architectures for other packages (amd64 and arm64)
 OTHER_ARCHS = ["amd64", "arm64"]
 
 # Helper function to download files
@@ -37,10 +35,17 @@ def download_file(url, dest):
         return False
     return True
 
+# Version comparison by splitting and comparing each part as an integer
+def compare_versions(version1, version2):
+    v1_parts = list(map(int, version1.split('.')))
+    v2_parts = list(map(int, version2.split('.')))
+    return v1_parts > v2_parts
+
 # Determine which architectures to use based on package name
 def get_architectures_for_package(package_name):
-    if "cassandra" in package_name or "dse" in package_name:
-        return CASSANDRA_DSE_ARCH
+    # Only cassandra and dse6.x packages should be searched in the 'all' architecture
+    if "cassandra" in package_name or ("dse" in package_name and "6." in package_name):
+        return CASSANDRA_DSE6_ARCH
     else:
         return OTHER_ARCHS
 
@@ -58,63 +63,34 @@ def get_latest_package_version(package_name, arch):
     with open(f"Packages_{arch}", "r") as f:
         lines = f.readlines()
 
-    # Regular expression to match package entries
     current_package = {}
-    package_regex = re.compile(r"^Package: (.+)$")
-    version_regex = re.compile(r"^Version: (.+)$")
-    arch_regex = re.compile(r"^Architecture: (.+)$")
-    filename_regex = re.compile(r"^Filename: (.+)$")
-
     latest_version = None
     latest_package = None
 
-    # List of found package names for fuzzy matching
-    available_packages = []
-
     # Loop through the lines in the Packages file
     for line in lines:
-        # Find package name
-        package_match = package_regex.match(line)
-        if package_match:
-            current_package["name"] = package_match.group(1)
-            available_packages.append(current_package["name"])  # Collect for fuzzy matching
-        
-        # Find version
-        version_match = version_regex.match(line)
-        if version_match:
-            current_package["version"] = version_match.group(1)
-        
-        # Find architecture
-        arch_match = arch_regex.match(line)
-        if arch_match:
-            current_package["arch"] = arch_match.group(1)
-        
-        # Find filename (URL path to the .deb file)
-        filename_match = filename_regex.match(line)
-        if filename_match:
-            current_package["filename"] = filename_match.group(1)
-        
-        # If we have a complete package entry, compare the version and update if necessary
+        if line.startswith("Package: "):
+            current_package["name"] = line.split(": ")[1].strip()
+        elif line.startswith("Version: "):
+            current_package["version"] = line.split(": ")[1].strip()
+        elif line.startswith("Architecture: "):
+            current_package["arch"] = line.split(": ")[1].strip()
+        elif line.startswith("Filename: "):
+            current_package["filename"] = line.split(": ")[1].strip()
+
+        # Check if we have all required fields
         if all(key in current_package for key in ["name", "version", "arch", "filename"]):
             if current_package["name"] == package_name and current_package["arch"] == arch:
-                current_version = current_package["version"]
-                # Use packaging.version to ensure correct version comparison
-                if latest_version is None or version.parse(current_version) > version.parse(latest_version):
-                    latest_version = current_version
+                # Compare versions numerically
+                if latest_version is None or compare_versions(current_package["version"], latest_version):
+                    latest_version = current_package["version"]
                     latest_package = current_package.copy()
-
-            # Reset current_package for the next package entry
-            current_package = {}
+            current_package = {}  # Reset for next package
 
     if latest_package:
         return latest_package
     else:
-        # Attempt to fuzzy match package name if no exact match was found
-        closest_match = difflib.get_close_matches(package_name, available_packages, n=1, cutoff=0.7)
-        if closest_match:
-            print(f"Warning: No exact match found for {package_name} in {arch}, but found a close match: {closest_match[0]}")
-        else:
-            print(f"Error: No valid versions found for {package_name} (searched in {arch})")
+        print(f"Error: No valid versions found for {package_name} (searched in {arch})")
         return None
 
 # Step 3: Download the latest version of each package from appropriate architectures
@@ -131,7 +107,7 @@ for package_name in PACKAGES:
                 deb_file = os.path.basename(package_path)
 
                 # Clean the filename by removing the hash or long string towards the end
-                cleaned_filename = re.sub(r'_[a-f0-9]+\.deb$', '.deb', deb_file)
+                cleaned_filename = deb_file.split('_')[0] + '_' + deb_file.split('_')[1] + '_' + deb_file.split('_')[2] + '.deb'
 
                 # Download the latest .deb file
                 print(f"Downloading {cleaned_filename} from {deb_url}...")
@@ -140,7 +116,7 @@ for package_name in PACKAGES:
 
 # Clean up
 print("Cleaning up...")
-for arch in set(CASSANDRA_DSE_ARCH + OTHER_ARCHS):
+for arch in set(CASSANDRA_DSE6_ARCH + OTHER_ARCHS):
     if os.path.exists(f"Packages_{arch}"):
         os.remove(f"Packages_{arch}")
 
