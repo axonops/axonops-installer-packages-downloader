@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os
-import requests
+import urllib.request
 import gzip
 import xml.etree.ElementTree as ET
 from packaging import version
@@ -21,11 +21,17 @@ PACKAGES = [
 ]
 ARCHS = ["x86_64", "noarch"]  # Search for both x86_64 and noarch packages
 
-# Helper function to download files
+# Helper function to download files using urllib with user-agent
 def download_file(url, dest):
-    response = requests.get(url, stream=True)
-    with open(dest, 'wb') as f:
-        f.write(response.content)
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+        request = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(request) as response:
+            with open(dest, 'wb') as out_file:
+                out_file.write(response.read())
+        print(f"Downloaded {url} to {dest}")
+    except urllib.error.URLError as e:
+        print(f"Failed to download {url}: {e.reason}")
 
 # Step 1: Download the repomd.xml
 print("Downloading repomd.xml...")
