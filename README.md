@@ -7,10 +7,14 @@ In some cases, you may be interested in downloading the latest packages from the
 ## Requirements
 Python3 is installed on your machine.
 
-## YUM
+## YUM - RPM Packages Downloader
 Use the following set of commands to download the latest AxonOps packages to your machine.
 ```
-mkdir axonops
-cd axonops
 python3 axonops_rpm_packages_downloader.py
+```
+
+## APT - DEB Packages Downloader
+Use the following set of commands to download the latest AxonOps packages to your machine.
+```
+python3 axonops_deb_packages_downloader.py
 ```
