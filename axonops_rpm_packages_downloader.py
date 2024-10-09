@@ -12,7 +12,7 @@ PACKAGES = [
     "axon-agent",
     "axon-dash",
     "axon-dse5.1-agent",
-    "axon-cassandra-3.11-agent",
+    "axon-cassandra3.11-agent",
     "axon-cassandra4.0-agent",
     "axon-cassandra4.0-agent-jdk8",
     "axon-cassandra4.1-agent",
