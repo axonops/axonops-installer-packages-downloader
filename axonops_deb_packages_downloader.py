@@ -16,7 +16,8 @@ PACKAGES = [
     "axon-cassandra4.0-agent-jdk8",
     "axon-cassandra4.1-agent",
     "axon-cassandra4.1-agent-jdk8",
-    "axon-cassandra5.0-agent"
+    "axon-cassandra5.0-agent-jdk11",
+    "axon-cassandra5.0-agent-jdk17"
 ]
 
 # Separate architectures for cassandra and dse6.x packages (all architecture)
