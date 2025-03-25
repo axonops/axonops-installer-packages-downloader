@@ -1,4 +1,4 @@
-# AxonOps install packages downloader
+# AxonOps installers download script
 
 [AxonOps](https://axonops.com/) installation is generally performed using either YUM or APT package managers as described in https://axonops.com/docs/installation-starter/axon-server/axonserver_install/.
 
