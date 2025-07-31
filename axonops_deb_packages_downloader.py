@@ -10,8 +10,12 @@ PACKAGES = [
     "axon-server",
     "axon-agent",
     "axon-dash",
+    "axon-dash-pdf",
     "axon-dash-pdf2",
     "axon-dse5.1-agent",  # Ensure this is checked under amd64/arm64
+    "axon-dse6.7-agent",  # Ensure this is checked under amd64/arm64
+    "axon-dse6.8-agent",  # Ensure this is checked under amd64/arm64
+    "axon-dse6.9-agent",  # Ensure this is checked under amd64/arm64
     "axon-cassandra3.11-agent",
     "axon-cassandra4.0-agent",
     "axon-cassandra4.0-agent-jdk8",
