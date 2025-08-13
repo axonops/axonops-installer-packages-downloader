@@ -9,6 +9,8 @@ COMPONENT = "main"
 PACKAGES = [
     "axon-server",
     "axon-agent",
+    "axon-kafka2-agent",
+    "axon-kafka3-agent",
     "axon-dash",
     "axon-dash-pdf",
     "axon-dash-pdf2",
@@ -25,10 +27,12 @@ PACKAGES = [
     "axon-cassandra5.0-agent-jdk17"
 ]
 
-# Separate architectures for cassandra and dse6.x packages (all architecture)
-CASSANDRA_DSE6_ARCH = ["all"]
+# Separate architectures for cassandra, dse, kafka packages (all architecture)
+ALL_ARCH_NAME = ["all"]
+# List of the packages that are in the architecture all
+APP_IN_ALL_ARCH = ["cassandra","dse","kafka"]
 # Separate architectures for other packages (amd64 and arm64)
-OTHER_ARCHS = ["amd64", "arm64"]
+OTHER_ARCHS_NAMES = ["amd64", "arm64"]
 
 # Helper function to download files using urllib
 def download_file(url, dest):
@@ -52,11 +56,11 @@ def compare_versions(version1, version2):
 
 # Determine which architectures to use based on package name
 def get_architectures_for_package(package_name):
-    # Only cassandra and dse6.x packages should be searched in the 'all' architecture
-    if "cassandra" in package_name or ("dse" in package_name and "6." in package_name):
-        return CASSANDRA_DSE6_ARCH
-    else:
-        return OTHER_ARCHS
+    # Only cassandra, dse and kafka packages should be searched in the 'all' architecture
+    for app in APP_IN_ALL_ARCH:
+        if app in package_name:
+            return ALL_ARCH_NAME
+    return OTHER_ARCHS_NAMES
 
 # Step 1: Download and search through all architectures
 def download_packages_for_arch(arch):
@@ -96,7 +100,7 @@ def get_latest_package_version(package_name, arch):
     if latest_package:
         return latest_package
     else:
-        print(f"Error: No valid versions found for {package_name} (searched in {arch})")
+        print(f"ERROR: No valid versions found for {package_name} (searched in {arch})")
         return None
 
 # Step 3: Download the latest version of each package from appropriate architectures
@@ -122,7 +126,7 @@ for package_name in PACKAGES:
 
 # Clean up
 print("Cleaning up...")
-for arch in set(CASSANDRA_DSE6_ARCH + OTHER_ARCHS):
+for arch in set(ALL_ARCH_NAME + OTHER_ARCHS_NAMES):
     if os.path.exists(f"Packages_{arch}"):
         os.remove(f"Packages_{arch}")
 
