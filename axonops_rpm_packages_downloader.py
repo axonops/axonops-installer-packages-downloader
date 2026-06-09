@@ -11,6 +11,7 @@ PACKAGES = [
     "axon-agent",
     "axon-kafka2-agent",
     "axon-kafka3-agent",
+    "axon-kafka4-agent",
     "axon-dash",
     "axon-dash-pdf",
     "axon-dash-pdf2",
